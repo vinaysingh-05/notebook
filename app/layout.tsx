@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/theme-provider'
 import { AuthProvider } from '@/components/auth-provider'
+import { Footer } from '@/components/footer' // 👈 Import your new Footer
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -25,7 +26,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="font-sans antialiased">
+      {/* 👈 Added min-h-screen flex flex-col to push footer to bottom */}
+      <body className="font-sans antialiased min-h-screen flex flex-col">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -33,7 +35,15 @@ export default function RootLayout({
           disableTransitionOnChange={false}
         >
           <AuthProvider>
-            {children}
+            
+            {/* 👈 flex-1 makes the main content take up all available space */}
+            <div className="flex-1">
+              {children}
+            </div>
+
+            {/* 👈 Added the Footer here */}
+            <Footer />
+
           </AuthProvider>
         </ThemeProvider>
         <Analytics />

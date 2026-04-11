@@ -87,30 +87,30 @@ export default function DashboardPage() {
 
   // ➕ Add Note
   const handleAddNote = async (e: React.FormEvent) => {
-  e.preventDefault()
+    e.preventDefault()
 
-  if (!newNote.trim() || !user) {
-    console.log("❌ Empty note or user missing")
-    return
+    if (!newNote.trim() || !user) {
+      console.log("❌ Empty note or user missing")
+      return
+    }
+
+    try {
+      console.log("🔥 Adding note...")
+
+      await addDoc(collection(db, "notes"), {
+        content: newNote,
+        createdAt: serverTimestamp(),
+        userEmail: user.email,
+        pinned: false,
+      })
+
+      console.log("✅ Note added successfully")
+
+      setNewNote("")
+    } catch (error) {
+      console.log("❌ ADD ERROR:", error)
+    }
   }
-
-  try {
-    console.log("🔥 Adding note...")
-
-    await addDoc(collection(db, "notes"), {
-      content: newNote,
-      createdAt: serverTimestamp(),
-      userEmail: user.email,
-      pinned: false,
-    })
-
-    console.log("✅ Note added successfully")
-
-    setNewNote("")
-  } catch (error) {
-    console.log("❌ ADD ERROR:", error)
-  }
-}
 
   // 🗑 Delete Note
   const handleDeleteNote = async (id: string) => {
@@ -153,28 +153,18 @@ export default function DashboardPage() {
   // ⛔ Loading state fix (important)
   if (user === null) return null
 
+  // Format the username nicely (use display name, or split the email so it just says "Welcome, kunal" instead of "Welcome, kunal@gmail.com")
+  const displayName = user.displayName || (user.email ? user.email.split('@')[0] : "User")
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Navbar />
 
       <main className="container mx-auto flex-1 px-4 py-8">
         
-        {/* Logout */}
-        <div className="flex justify-end mb-6">
-          <Button
-            variant="destructive"
-            onClick={async () => {
-              await auth.signOut()
-              router.push("/login")
-            }}
-          >
-            Logout
-          </Button>
-        </div>
-
-        {/* Welcome */}
-        <h1 className="text-2xl font-bold mb-4">
-          Welcome, {user.displayName || user.email || "User"}
+        {/* Welcome Header */}
+        <h1 className="text-3xl font-bold mb-8 tracking-tight">
+          Welcome, {displayName}
         </h1>
 
         {/* Add Note */}
@@ -192,7 +182,7 @@ export default function DashboardPage() {
           placeholder="Search notes..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="mb-4"
+          className="mb-8"
         />
 
         {/* Notes */}
@@ -208,7 +198,7 @@ export default function DashboardPage() {
               />
             ))
           ) : (
-            <p className="text-center text-gray-500">
+            <p className="text-center text-muted-foreground mt-8">
               No notes found.
             </p>
           )}

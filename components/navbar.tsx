@@ -1,19 +1,45 @@
 "use client"
 
+import * as React from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { StickyNote, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-interface NavbarProps {
-  isAuthenticated?: boolean
-  userName?: string
-  onLogout?: () => void
-}
+// 🔐 Import Firebase Auth
+import { onAuthStateChanged, signOut } from "firebase/auth"
+import { auth } from "@/lib/firebase"
 
-export function Navbar({ isAuthenticated = false, userName, onLogout }: NavbarProps) {
+export function Navbar() {
   const pathname = usePathname()
+  const router = useRouter()
+  
+  // State to track if user is logged in
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false)
+
+  // Listen for authentication changes
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsLoggedIn(true)
+      } else {
+        setIsLoggedIn(false)
+      }
+    })
+
+    return () => unsubscribe()
+  }, [])
+
+  // Handle logout directly from the navbar
+  const handleLogout = async () => {
+    try {
+      await signOut(auth)
+      router.push("/login")
+    } catch (error) {
+      console.log("Error logging out:", error)
+    }
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card/80 backdrop-blur-md transition-all duration-300">
@@ -33,26 +59,19 @@ export function Navbar({ isAuthenticated = false, userName, onLogout }: NavbarPr
         {/* 🔹 NAV */}
         <nav className="flex items-center gap-4">
 
-          {isAuthenticated ? (
-            <>
-              <span className="hidden text-sm text-muted-foreground sm:inline">
-                Welcome,{" "}
-                <span className="font-medium text-foreground">
-                  {userName || "User"}
-                </span>
-              </span>
-
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onLogout}
-                className="gap-2 hover:bg-red-500/10 hover:text-red-500 transition"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">Logout</span>
-              </Button>
-            </>
+          {isLoggedIn ? (
+            // User IS logged in: Show ONLY Logout and Theme Toggle
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className="gap-2 hover:bg-red-500/10 hover:text-red-500 transition"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="hidden sm:inline">Logout</span>
+            </Button>
           ) : (
+            // User IS NOT logged in: Show Login and Sign Up
             <>
               {pathname !== "/login" && (
                 <Link href="/login">
